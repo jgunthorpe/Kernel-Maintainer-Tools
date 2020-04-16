@@ -1,15 +1,17 @@
-from __future__ import print_function
-import contextlib
-import email.parser
-import mailbox
-import hashlib
-import copy
-import requests
 import configparser as ConfigParser
-import xmlrpc.client as xmlrpclib
+import contextlib
+import copy
+import email.parser
+import hashlib
+import mailbox
 import sys
-from .git import *
+import urllib.parse
+import xmlrpc.client as xmlrpclib
+
+import requests
+
 from . import config
+from .git import *
 
 CONFIG_FILE = os.path.expanduser('~/.pwclientrc')
 
@@ -179,6 +181,12 @@ def args_internal_applypatch_msg(parser):
                         help="Commit Message filename")
 
 
+def form_link_header(msg_id):
+    # RFC 2396 section 3.3
+    url = urllib.parse.quote(msg_id, safe="/;=?:@&=+$,")
+    return f"Link: https://lore.kernel.org/r/{url}"
+
+
 def cmd_internal_applypatch_msg(args):
     """Edit the commit message from git am to change the Message-Id header into a
     proper Link header in the right place."""
@@ -202,7 +210,7 @@ def cmd_internal_applypatch_msg(args):
 
     while lines[ln - 1].startswith(b"Fixes"):
         ln = ln - 1
-    lines.insert(ln, b"Link: https://lore.kernel.org/r/%s\n" % (m.group(1)))
+    lines.insert(ln, form_link_header(m.group(1)).encode() + b"\n")
 
     # Remove duplicated merger signed-off-by lines.
     for ln, I in enumerate(lines):
