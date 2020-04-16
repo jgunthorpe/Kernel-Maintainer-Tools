@@ -1,0 +1,20 @@
+BasedOnStyle: LLVM
+IndentWidth: 8
+UseTab: Always
+BreakBeforeBraces: Linux
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+
+AlwaysBreakBeforeMultilineStrings: true
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AlignEscapedNewlinesLeft: false
+AlignTrailingComments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignAfterOpenBracket: true
+SpaceAfterCStyleCast: false
+MaxEmptyLinesToKeep: 2
+BreakStringLiterals: false
+SortIncludes:    false
+ContinuationIndentWidth: 8
+BreakBeforeBinaryOperators: None

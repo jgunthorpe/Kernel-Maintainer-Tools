@@ -1,0 +1,19 @@
+[remote "linus"]
+	url = ssh://gitolite.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
+	fetch = +refs/heads/*:refs/remotes/linus/*
+[branch "master"]
+	remote = linus
+	merge = refs/heads/master
+[remote "ko-rdma"]
+	url = ssh://gitolite.kernel.org/pub/scm/linux/kernel/git/rdma/rdma.git
+	fetch = +refs/heads/*:refs/remotes/*
+        push = remotes/linus/master:refs/heads/master
+        push = refs/heads/k.o/*:refs/heads/*
+        push = +refs/tags/for-linus*:refs/tags/for-linus*
+        push = +refs/tags/for-next*:refs/tags/for-next*
+
+# Delete branch:
+#git push ko-rdma :k.o/for-next
+
+# Delete tag:
+#git push ko-rdma :refs/tags/for-next-mlx

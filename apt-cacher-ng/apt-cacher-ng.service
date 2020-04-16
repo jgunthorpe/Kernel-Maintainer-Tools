@@ -1,0 +1,16 @@
+[Unit]
+Description=APT-Cacher-ng HTTP proxy cache
+
+[Service]
+SyslogIdentifier=apt-cacher-ng
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill apt-cacher-ng
+ExecStartPre=-/usr/bin/docker rm apt-cacher-ng
+ExecStart=/usr/bin/docker run \
+	 -p 3142:3142 \
+	 --mount source=apt-cacher-ng,target=/var/cache/apt-cacher-ng \
+	 --name=apt-cacher-ng apt-cacher-ng
+ExecStop=-/usr/bin/docker stop apt-cacher-ng
+ExecStopPost=-/usr/bin/docker rm apt-cacher-ng
+Restart=always
+RestartSec=5s

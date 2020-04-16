@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+# PYTHON_ARGCOMPLETE_OK
+import os
+import sys
+
+# Load our support module
+sys.path.append(os.path.dirname(__file__))
+import gj_tools.cmdline
+
+cmd_modules = {
+    "cmd_ack_emails",
+    "cmd_acr",
+    "cmd_compile",
+    "cmd_edit_comments",
+    "cmd_expand_am",
+    "cmd_gerrit",
+    "cmd_kconfig",
+    "cmd_ko_tools",
+    "cmd_linus_request_pull",
+    "cmd_misc",
+    "cmd_preflight",
+    "cmd_pw_am_todo",
+    "cmd_review",
+    "cmd_send_patches",
+    "cmd_update_shared",
+}
+
+gj_tools.cmdline.main(cmd_modules, gj_tools)

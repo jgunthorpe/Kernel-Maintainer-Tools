@@ -1,0 +1,12 @@
+debootstrap sid /scrap/jgg/sid http://deb.debian.org/debian-ports
+systemd-nspawn --directory=/scrap/jgg/sid /bin/bash
+rsync -av jgg@gen-l-vrt-197:/images/jgg/kvm/.git .
+git reset --hard HEAD
+
+
+qemu-system-ppc64 '-append' 'root=/dev/root rw rootfstype=9p rootflags=trans=virtio earlyprintk=serial,ttyS0,115200 console=hvc0' '-chardev' 'stdio,id=stdio,mux=on,signal=off' '-serial' 'chardev:stdio' '-cpu' 'host' '-device' 'virtio-rng-pci' '-device' 'virtio-balloon-pci' '-device' 'virtio-serial-pci' '-device' 'virtconsole,chardev=stdio' '-device' 'virtio-9p-pci,fsdev=host_fs,mount_tag=/dev/root' '-enable-kvm' '-fsdev' 'local,id=host_fs,security_model=passthrough,path=/mnt/self' '-kernel' '/scrap/jgg/kvm/vmlinux' '-m' '256M' '-mon' 'chardev=stdio' '-no-reboot' '-nographic' '-vga' 'none' '-net' 'nic,model=virtio,macaddr=da:9e:f3:17:05:93' '-net' 'user,hostfwd=tcp:127.0.0.1:4444-:22'
+
+l-reg-6032.mtl.labs.mlnx
+
+~/sgwork/ppc64
+
