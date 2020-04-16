@@ -221,6 +221,7 @@ def cmd_kconfig_gen(args):
     os.environ["SRCARCH"] = "x86"
     os.environ["HOSTCXX"] = config.compiler.replace("gcc", "g++")
     os.environ["CC"] = config.compiler
+    os.environ["LD"] = "ld"
 
     kconf = kconfiglib.Kconfig(warn_to_stderr=False)
 
