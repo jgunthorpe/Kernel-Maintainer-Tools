@@ -22,9 +22,10 @@ class rdma(object):
         "SUNRPC_BACKCHANNEL",
         "SMC",
         "SMC_DIAG",
+        "BLK_DEV_RNBD_CLIENT",
+        "BLK_DEV_RNBD_SERVER",
 
         # Compile debugging
-        "UAPI_HEADER_TEST",
         "ENABLE_MUST_CHECK",
     }
     force = {}
@@ -131,7 +132,6 @@ class mkt(object):
         "STACKPROTECTOR_STRONG",
         "STACK_VALIDATION",
         "UBSAN",
-        "UBSAN_NO_ALIGNMENT",
         "UBSAN_SANITIZE_ALL",
         "UNWINDER_FRAME_POINTER",
         "WQ_WATCHDOG",
@@ -190,6 +190,7 @@ class hmm(object):
         "DRM_NOUVEAU_SVM",
         "DRM_AMDGPU_USERPTR",
         "NVDIMM_TEST_BUILD",
+        "ZONE_DEVICE",
     }
     force = {}
 
