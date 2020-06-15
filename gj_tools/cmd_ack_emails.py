@@ -9,59 +9,44 @@
 """
 
 from __future__ import print_function
+
+import base64
 import collections
-import httplib2
+import contextlib
+import email.parser
 import mailbox
 import os
+import re
+import socket
 import subprocess
 import tempfile
 import time
-import contextlib
-import base64
-import email.parser
-import re
-from .git import *
-from . import cmd_pw_am_todo
 
-# -------------------------------------------------------------------------
-# If modifying the scope, delete your previously saved credentials
-SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
-CLIENT_SECRET_FILE = '~/email-config/gmail_ro_client_id.json'
-APPLICATION_NAME = 'gj_script'
+import httplib2
+
+from . import cmd_pw_am_todo, config
+from .git import *
 
 
 def google_api_get_credentials():
-    """Gets valid user credentials from storage.
-
-    If nothing has been stored, or if the stored credentials are invalid,
-    the OAuth2 flow is completed to obtain the new credentials.
-
-    Returns:
-        Credentials, the obtained credential.
-    """
-    import argparse
-    from oauth2client import client
-    from oauth2client.file import Storage
-    from oauth2client import tools
-
-    home_dir = os.path.expanduser('~')
-    credential_dir = os.path.join(home_dir, '.credentials')
-    if not os.path.exists(credential_dir):
-        os.makedirs(credential_dir)
-    credential_path = os.path.join(credential_dir,
-                                   '%s.json' % (APPLICATION_NAME))
-
-    store = Storage(credential_path)
-    credentials = store.get()
-    if not credentials or credentials.invalid:
-        flow = client.flow_from_clientsecrets(
-            os.path.expanduser(CLIENT_SECRET_FILE), SCOPES)
-        flow.user_agent = APPLICATION_NAME
-        dummy = argparse.ArgumentParser(parents=[tools.argparser])
-        flags = dummy.parse_args([])
-        credentials = tools.run_flow(flow, store, flags)
-    return credentials
-
+    """Use cloud-maildir-sync as a credentials broker for a gmail oauth
+    token"""
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+        sock.connect(config.cms_socket)
+        sock.sendall(f"SMTP {config.cms_user}".encode())
+        sock.shutdown(socket.SHUT_WR)
+        ret = sock.recv(16 * 1024).decode()
+        g = re.match("user=\\S+\1auth=\\S+ (\\S+)\1\1", ret)
+    if re.match("user=\\S+\1auth=\\S+ (\\S+)\1\1", ret) is None:
+        raise ValueError(f"Invalid CMS server response {ret!r}")
+    import oauth2client.client
+    return oauth2client.client.OAuth2Credentials(access_token=g.group(1),
+                                                 client_id=None,
+                                                 client_secret=None,
+                                                 refresh_token=None,
+                                                 token_expiry=None,
+                                                 token_uri=None,
+                                                 user_agent=None)
 
 def google_api_get_gmail():
     """Get a gmail service object"""
