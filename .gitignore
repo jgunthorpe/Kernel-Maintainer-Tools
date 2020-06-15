@@ -1,2 +1,4 @@
 *.pyc
 __py_cache__
+.mypy_cache/
+.vscode/
