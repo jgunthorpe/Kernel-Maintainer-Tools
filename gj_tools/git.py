@@ -40,6 +40,10 @@ def git_call(args):
         'git',
     ] + args)
 
+def git_exec(args):
+    """Run git and display the output to the terminal, does not return"""
+    os.execvp("git", ["git"] + args)
+
 
 def git_output(args, mode=None, null_stderr=False, input=None, env=None):
     """Run git and return the output"""

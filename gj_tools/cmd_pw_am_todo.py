@@ -84,7 +84,7 @@ def pw_am_patches(args, rpc, patches):
         os.link(F.name, bundle)
 
     print("Applying bundle of %u patches %s" % (len(patches), bundle))
-    os.execvp("git", ["git", "am", "-3s", bundle])
+    git_exec(["am", "-3s", bundle])
 
 
 # -------------------------------------------------------------------------
