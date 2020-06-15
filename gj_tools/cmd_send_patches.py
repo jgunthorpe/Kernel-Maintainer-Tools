@@ -11,14 +11,6 @@ from .cmd_pw_am_todo import form_link_header
 from .git import *
 
 
-def get_branches(name):
-    """Return the name of all remote branches"""
-    branches = git_output(
-        ["branch", "--all", "--list", "--format", '%(refname)'], mode="lines")
-    return set(I for I in branches
-               if re.match(r"refs/heads/to-list/.*/" + name, I))
-
-
 def email_list(emails):
     # Fixme: This utf-8 encodes things, maybe that is not needed anymore
     return ',\n\t'.join(
@@ -30,8 +22,24 @@ class Series(object):
     message_fns = None
     cover_commit = None
 
-    def _get_next_version(self):
-        return 1
+    def _init_versions(self):
+        branches = git_output(
+            ["branch", "--all", "--list", "--format", '%(refname)'],
+            mode="lines")
+
+        res = 1
+        for I in branches:
+            g = re.match(f"refs/heads/to-list/[0-9-]+/{self.name}/(\\d+)",
+                         I.decode())
+            if g is not None:
+                ver = int(g.group(1))
+                self.version_branches[ver] = I.decode()
+                res = max(res, ver + 1)
+
+        date = datetime.date.today().isoformat()
+        self.version_branches[
+            res] = f"refs/heads/to-list/{date}/{self.name}/{res}"
+        return res
 
     def __init__(self, args, git_commits):
         self.git_commits = git_commits
@@ -51,7 +59,8 @@ class Series(object):
 
         self.to_emails = {commit: set() for commit in self.commits}
         self.cc_emails = {commit: set() for commit in self.commits}
-        self.version = self._get_next_version()
+        self.version_branches = {}
+        self.version = self._init_versions()
 
         self.user_email = git_output(["config", "user.email"]).decode()
 
@@ -170,9 +179,10 @@ class Series(object):
         assert len(self.message_fns) == len(self.commits)
 
         if self.cover_commit:
-            assert b"/0000-" in self.message_fns[self.cover_commit]
-
-        self._fix_cover_letter()
+            assert (b"/0000-" in self.message_fns[self.cover_commit]
+                    or f"/v{self.version}-0000-"
+                    in self.message_fns[self.cover_commit].decode())
+            self._fix_cover_letter()
         self._flow_emails()
         self._fix_emails()
 
@@ -273,12 +283,11 @@ def cmd_send(args):
 
     with tempfile.TemporaryDirectory() as dirname:
         fns = series.format_patches(dirname)
+        branch = series.version_branches[series.version]
 
         subprocess.check_call(["emacs"] + fns)
 
         all_commit = series.make_commit(dirname)
-        date = datetime.date.today().isoformat()
-        branch = f"to-list/{date}/{series.name}/{series.version}"
         git_call([
             "send-email",
             "--quiet",
@@ -296,3 +305,43 @@ def cmd_send(args):
 
         git_output(["branch", "-f", branch, all_commit])
         print(f"Saved to branch {branch}")
+
+
+# -------------------------------------------------------------------------
+def args_send_diff(parser):
+    parser.add_argument(
+        "--base",
+        action="append",
+        help="Set the 'upstream' point. Automatically all remote branches",
+        default=None)
+    parser.add_argument("--head",
+                        action="store",
+                        help="Top most commit to send",
+                        default="HEAD")
+    parser.add_argument("--name",
+                        action="store",
+                        help="series name",
+                        required=True)
+
+
+def cmd_send_diff(args):
+    commits = git_base_fewest_commits(args.base, args.head)
+    commits.sanity_check()
+
+    args.prefix = None
+    series = Series(args, commits)
+
+    old_branch = git_ref_id(series.version_branches[series.version - 1],
+                            fail_is_none=True)
+
+    for ln in git_read_object("commit", old_branch).desc:
+        ln = ln.decode()
+        if ln.startswith("Series:"):
+            print(f"v{series.version -1} {ln}")
+
+    old_commits = GitRange(f"{old_branch}^1", f"{old_branch}^2")
+    git_exec([
+        "range-diff",
+        old_commits.dotted_rev_range(),
+        commits.dotted_rev_range()
+    ])

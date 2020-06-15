@@ -233,6 +233,9 @@ class GitRange(object):
     def rev_range(self):
         return [self.newest, "^" + self.ancestor]
 
+    def dotted_rev_range(self):
+        return f"{self.ancestor}...{self.newest}"
+
     def get_changed_files(self):
         """Return a list of all files that are different between the two treeish
         things. This is a straight up diff between the two points"""
