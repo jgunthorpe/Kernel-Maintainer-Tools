@@ -16,6 +16,7 @@ RUN \
   echo "VfilePatternEx: (^/\?release=[0-9]+&arch=)|(^/metalink\?repo=epel-[0-9]+&arch=)|(/suse/setup/descr/)|(/gpg-pubkey-.*.asc)" >> /etc/apt-cacher-ng/acng.conf && \
   echo "Remap-centos: file:centos_mirrors /centos" >> /etc/apt-cacher-ng/acng.conf && \
   echo "Remap-epel: file:epel_mirrors /epel" >> /etc/apt-cacher-ng/acng.conf && \
+  echo "PassThroughPattern: .*" >> /etc/apt-cacher-ng/acng.conf && \
   sed 's/^.*"http:/http:/' < /tmp/centos-mirrors.csv | sed 's/".*$//' | grep ^http > /etc/apt-cacher-ng/centos_mirrors && \
   grep '^http://' /tmp/epel-mirrors.txt | sed 's|^\(http://.*\)/7/x86_64/|\1|g' > /etc/apt-cacher-ng/epel_7_x86_64_mirrors
 
