@@ -10,7 +10,7 @@ import xmlrpc.client as xmlrpclib
 
 import requests
 
-from . import config
+from . import cmd_ack_emails, config
 from .git import *
 
 CONFIG_FILE = os.path.expanduser('~/.pwclientrc')
@@ -37,23 +37,36 @@ class RPC(object):
         self.user = pwconfig.get(project_str, 'username')
         RPC.by_project[project] = self
 
+    def check_json(self, r: requests.Response):
+        if r.status_code != 200:
+            print(f"patchworks failed {r.json()}")
+            r.raise_for_status()
+            raise ValueError("Bad patchworks response")
+        return r.json()
+
     def patch_list(self, params):
         params = copy.copy(params)
         params["project"] = self.project
         r = requests.get(self.url + "1.1/patches/",
                          params=params,
                          auth=self.auther)
-        return r.json()
+        return self.check_json(r)
 
     def get_patch(self, patch_id):
         r = requests.get(self.url + "1.1/patches/%d/" % (patch_id),
                          auth=self.auther)
-        return r.json()
+        return self.check_json(r)
+
+    def modify_patch(self, patch_id, json):
+        r = requests.patch(self.url + "1.1/patches/%d/" % (patch_id),
+                           json=json,
+                           auth=self.auther)
+        return self.check_json(r)
 
     def get_series(self, series_id):
         r = requests.get(self.url + "1.1/series/%d/" % (series_id),
                          auth=self.auther)
-        return r.json()
+        return self.check_json(r)
 
     def patch_get_mbox(self, patch_id):
         return requests.get("%s/patch/%d/mbox/" %
@@ -63,8 +76,15 @@ class RPC(object):
     def get_link(self, url):
         assert url.startswith(self.url)
         r = requests.get(url, auth=self.auther)
-        return r.json()
+        return self.check_json(r)
 
+    def user_list(self, params):
+        params = copy.copy(params)
+        params["project"] = self.project
+        r = requests.get(self.url + "1.1/users/",
+                         params=params,
+                         auth=self.auther)
+        return self.check_json(r)
 
 def pw_am_patches(args, rpc, patches):
     """Download and write all the patches to a mbox file, then run git am on that file"""
@@ -221,3 +241,44 @@ def cmd_internal_applypatch_msg(args):
     with open(args.commit_fn, "wb") as F:
         for I in reversed(lines):
             F.write(I)
+
+# -------------------------------------------------------------------------
+def args_pw_mark_applied(parser):
+    parser.add_argument(
+        "--pw_files",
+        action="store",
+        help="Directory where the patchworks files were downloaded to",
+        default="~/Downloads")
+    parser.add_argument(
+        "--base",
+        action="append",
+        help="Set the 'upstream' point. Automatically all remote branches",
+        default=None)
+    parser.add_argument("--project",
+                        action="store",
+                        help="Project to use",
+                        default=None)
+
+
+def cmd_pw_mark_applied(args):
+    """Using the Link: header mark all the patches since base as applied on
+    patchworks"""
+    commits = git_base_fewest_commits(args.base)
+    commits.sanity_check()
+
+    # Load the messages from the commits and extract the patchworks IDs
+    msgs = cmd_ack_emails.get_pw_messages(args.pw_files, commits)
+    to_ack = set()
+    for I in msgs:
+        if I.patchworks_msg is None:
+            continue
+        pwid = cmd_ack_emails.get_header(I.patchworks_msg, "X-Patchwork-Id")
+        to_ack.add(int(pwid))
+
+    rpc = RPC(args.project)
+
+    my_user = rpc.user_list({"q": config.cms_user})[0]
+    applied = {'state': "accepted", 'delegate': my_user["id"]}
+    for I in sorted(to_ack):
+        r = rpc.modify_patch(I, applied)
+        print(f"Updated {r['name']!r} <- {applied!r}")

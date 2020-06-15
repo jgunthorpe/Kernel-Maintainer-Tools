@@ -309,13 +309,7 @@ def args_ack_emails(parser):
         default=None)
 
 
-def cmd_ack_emails(args):
-    """Generate a mbox for mutt with the emails from patchworks&gmail that were
-    applied to the local git"""
-    commits = git_base_fewest_commits(args.base)
-    commits.sanity_check()
-
-    # Figure out the commits we are acking
+def get_pw_messages(pw_files, commits):
     msgs = []
     for I in git_output(["log", "--pretty=format:%H\t%s"] +
                         commits.rev_range(),
@@ -331,12 +325,21 @@ def cmd_ack_emails(args):
                 break
 
         msgs.append(Commit(commit, subject, msg_id))
+    read_mbox_messages(pw_files, msgs)
+    return msgs
+
+def cmd_ack_emails(args):
+    """Generate a mbox for mutt with the emails from patchworks&gmail that were
+    applied to the local git"""
+    commits = git_base_fewest_commits(args.base)
+    commits.sanity_check()
+
+    # Figure out the commits we are acking
+    msgs = get_pw_messages(args.pw_files, commits)
 
     if not msgs:
         print("No new commits?")
         return
-
-    mbox = read_mbox_messages(args.pw_files, msgs)
     for I in msgs:
         if I.patchworks_msg is None:
             print("No messages found in the patchworks directory matching %r" %
