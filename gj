@@ -13,6 +13,7 @@ cmd_modules = {
     "cmd_compile",
     "cmd_edit_comments",
     "cmd_expand_am",
+    "cmd_fixup",
     "cmd_gerrit",
     "cmd_kconfig",
     "cmd_ko_tools",
