@@ -154,7 +154,7 @@ def cmd_linus_pull_request(args):
 
     with tempfile.NamedTemporaryFile(mode="w") as F:
         print("From %s Mon Sep 17 00:00:00 2001" % (tag_commit), file=F)
-        print("From: Jason Gunthorpe <jgg@mellanox.com>", file=F)
+        print("From: Jason Gunthorpe <jgg@nvidia.com>", file=F)
         print(
             "To: Linus Torvalds <torvalds@linux-foundation.org>, Doug Ledford <dledford@redhat.com>",
             file=F)
