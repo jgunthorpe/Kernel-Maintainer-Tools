@@ -4,6 +4,23 @@ import os
 from .git import *
 from . import config
 
+def find_diffs(patches):
+    for I in re.finditer(
+            (r"^(?:diff --git a/(.+?) b/(.+?)\nindex ([0-9a-f]+)\.\.([0-9a-f]+) [0-9]+)|"
+             r"(?:diff --git a/(.+?) b/(.+?)\ndeleted file mode [0-9]+\nindex ([0-9a-f]+)\.\.([0-9a-f]+))|"
+             r"(?:diff --git a/(.+?) b/(.+?)\nnew file mode [0-9]+\nindex ([0-9a-f]+)\.\.([0-9a-f]+)$)"
+             "$"),
+            patches, re.MULTILINE):
+        g = I.groups()
+        if g[0] is not None:
+            yield g[0:4]
+        elif g[4] is not None:
+            yield g[4:8]
+        elif g[8] is not None:
+            yield g[8:12]
+        else:
+            print(I.groups())
+
 
 def args_expand_am(parser):
     parser.add_argument("FN", action="store", help="Patch mbox file")
@@ -25,10 +42,9 @@ def cmd_expand_am(args):
 
     # Read all the files and blobs in the patch mbox
     files = collections.defaultdict(list)
-    for I in re.finditer(
-            r"^diff --git a/(.*) b/(.*)\nindex ([0-9a-f]+)\.\.([0-9a-f]+) [0-9]+$",
-            patches, re.MULTILINE):
-        afn, bfn, ablob, bblob = I.groups()
+    for I in find_diffs(patches):
+        afn, bfn, ablob, bblob = I
+        print(I)
         assert afn == bfn
         blobs = files[afn]
         if not blobs:
@@ -40,6 +56,8 @@ def cmd_expand_am(args):
     with git_temp_worktree():
         #os.environ["GIT_INDEX_FILE"] = "tmpindex";
         for fn, blobs in sorted(files.items()):
+            if blobs[0] == "0"*len(blobs[0]):
+                continue
             blobs[0] = git_ref_id(blobs[0])
             git_call([
                 "update-index", "--add", "--cacheinfo",
