@@ -33,12 +33,12 @@ class Series(object):
                          I.decode())
             if g is not None:
                 ver = int(g.group(1))
-                self.version_branches[ver] = I.decode()
+                self.version_branches[ver] = I.decode()[11:]
                 res = max(res, ver + 1)
 
         date = datetime.date.today().isoformat()
         self.version_branches[
-            res] = f"refs/heads/to-list/{date}/{self.name}/{res}"
+            res] = f"to-list/{date}/{self.name}/{res}"
         return res
 
     def __init__(self, args, git_commits):
