@@ -42,6 +42,7 @@ class Series(object):
         return res
 
     def __init__(self, args, git_commits):
+        self.args = args
         self.git_commits = git_commits
         self.name = args.name
         self.prefix = args.prefix
@@ -74,6 +75,9 @@ class Series(object):
         messages are reviewed."""
         skip_emails = set(I[1] for I in self.to_emails)
         skip_emails.add(self.user_email)
+        skip_emails.add("linux-kernel@vger.kernel.org")
+        skip_emails.add("jgg@mellanox.com")
+        skip_emails.add("jgg@ziepe.ca")
         newest_commit = 0
         for commit in self.commits:
             newest_commit = max(
@@ -92,10 +96,37 @@ class Series(object):
                     self.cc_emails[commit].add(addr)
                 if lkey in {"to"}:
                     self.to_emails[commit].add(addr)
+                if lkey == "fixes":
+                    fcommit = val.split(' ')[0]
+                    fseries = Series(self.args, GitRange(fcommit, fcommit + "^"))
+                    fseries.read_commits();
+                    fcommit = fseries.commits[0]
+                    self.to_emails[commit].update(fseries.to_emails[fcommit])
+                    self.cc_emails[commit].update(fseries.cc_emails[fcommit])
 
             serial = int(time.time() - newest_commit)
             assert (serial > 0)
             self.id_suffix = f"v{self.version}-{self.commits[-1][:12]}+{serial:x}-{self.name}_{self.user_email}"
+
+    def get_maintainers(self):
+        skip_emails = set()
+        skip_emails.add(self.user_email)
+        skip_emails.add("linux-kernel@vger.kernel.org")
+        skip_emails.add("jgg@mellanox.com")
+        skip_emails.add("jgg@ziepe.ca")
+        for commit in self.commits:
+            if commit is self.cover_commit:
+                continue;
+
+            with tempfile.NamedTemporaryFile() as F:
+                git_output_to_file(["format-patch","--stdout",f"{commit}^!"], F)
+                maints = subprocess.check_output(["scripts/get_maintainer.pl", "--no-git", "--no-fixes", "--no-git-fallback", "--no-rolestats", "--multiline", F.name])
+            for val in maints.splitlines():
+                addr = email.utils.parseaddr(val.decode())
+                if addr == ('', '') or addr[1] in skip_emails:
+                    continue
+                if addr not in self.cc_emails[commit]:
+                    self.to_emails[commit].add(addr)
 
     def _fix_cover_letter(self):
         """Extract the cover letter contents from the first cover letter
@@ -151,6 +182,21 @@ class Series(object):
                 if l:
                     msg.add_header("Cc", l)
                 mb.add(msg)
+
+            # Remove any gerrit cruft
+            with open(fn) as F:
+                lines = F.readlines()
+            for I in range(len(lines)):
+                ln = lines[I]
+                if ln == "---\n":
+                    break
+                if ln.startswith("Change-Id: I"):
+                    del lines[I]
+                    if lines[I-1].startswith("issue: "):
+                        del lines[I-1]
+                    break;
+            with open(fn, "w") as F:
+                F.writelines(lines)
 
     def format_patches(self, dirname):
         """Put all the patches into mailbox files and format them with the
@@ -270,6 +316,10 @@ def args_send(parser):
                         action="append",
                         help="To email address",
                         default=[])
+    parser.add_argument("--get_maintainers",
+                        action="store_true",
+                        help="Use scripts/get_maintainer.pl",
+                        default=False)
 
 
 def cmd_send(args):
@@ -281,12 +331,14 @@ def cmd_send(args):
     series.update_all_to(expand_to(args))
     series.read_commits()
 
+    if args.get_maintainers:
+        series.get_maintainers()
+
     with tempfile.TemporaryDirectory() as dirname:
         fns = series.format_patches(dirname)
         branch = series.version_branches[series.version]
 
         subprocess.check_call(["emacs"] + fns)
-
         all_commit = series.make_commit(dirname)
         git_call([
             "send-email",
