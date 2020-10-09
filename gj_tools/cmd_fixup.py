@@ -24,7 +24,7 @@ def cmd_fixup(args):
     """Generate fixup commits for the given files that merge the files
        with the last commit of that file."""
     if len(args.files) == 0:
-        args.files = git_output(["ls-files", "-m"], mode="lines")
+        args.files = [I.decode() for I in git_output(["ls-files", "-m"], mode="lines")]
 
     real_commit = {}
     commits = collections.defaultdict(set)
@@ -55,7 +55,7 @@ def cmd_fixup(args):
                     res = git_output([
                         "log", "-n", "1", "--pretty=oneline",
                         "%s^^{/%s}" % (res[0], other), "--"
-                    ]).strip()
+                    ]).decode().strip()
                 else:
                     res = nres
                 res = res.partition(" ")
@@ -64,7 +64,7 @@ def cmd_fixup(args):
             real_commit[res] = res
 
         if res is not None:
-            commits[res].add(I.decode())
+            commits[res].add(I)
 
     for k, v in commits.items():
         print(k[0], k[2])
