@@ -367,6 +367,13 @@ def get_msg_ids(args, arg):
         yield p["msgid"]
         return
 
+    # A message ID encoded in a URL
+    g = re.match(r"https://patchwork.kernel.org/project/.+?/patch/([^/]+)/?",
+                 arg)
+    if g:
+        yield "<" + g.group(1) + ">"
+        return
+
     # A link for a whole series
     g = re.match(
         r"https://patchwork.kernel.org/project/([^/]*)/list/\?series=(\d+)",

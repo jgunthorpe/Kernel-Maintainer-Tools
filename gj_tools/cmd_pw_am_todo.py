@@ -47,10 +47,24 @@ class RPC(object):
     def patch_list(self, params):
         params = copy.copy(params)
         params["project"] = self.project
-        r = requests.get(self.url + "1.1/patches/",
+        r = requests.get(self.url + "1.2/patches/",
                          params=params,
                          auth=self.auther)
         return self.check_json(r)
+
+    def normalize_patch_id(self, patch_idish):
+        # int values are just normal IDs
+        if isinstance(patch_idish, int):
+            return patch_idish
+
+        # Otherwise it must be a message ID, search for it
+        if "@" in patch_idish:
+            lst = self.patch_list(params={"msgid": patch_idish})
+            if len(lst) != 1:
+                raise ValueError(r"Bad patch id {r!patch_idish}")
+            return int(lst[0]["id"])
+        # Must be an int value
+        return int(patch_idish)
 
     def get_patch(self, patch_id):
         r = requests.get(self.url + "1.1/patches/%d/" % (patch_id),
@@ -110,40 +124,15 @@ def pw_am_patches(args, rpc, patches):
 # -------------------------------------------------------------------------
 
 
-def args_zz_pw_am_todo(parser):
-    parser.add_argument(
-        "--pw_files",
-        action="store",
-        help="Directory where the patchworks files were downloaded to",
-        default="~/Downloads")
-
-
-def cmd_zz_pw_am_todo(args):
-    """Fetch all patches delegated to the patchworks user to a mailbox and then
-    'git am' that mailbox.
-
-    This avoids using the obnoxious and clicky bundles interface in
-    patchworks, just mark the patches to the todo list and this will grab them
-    all."""
-    rpc = RPC()
-
-    patches = rpc.patch_list({
-        "archived": False,
-        "delegate": rpc.user,
-        "state": "new",
-        "order": "date"
-    })
-    pw_am_patches(args, rpc, [I["id"] for I in patches])
-
-
-# -------------------------------------------------------------------------
-
-
 def extract_id(rpc, id_str):
     # A link for a single patch
     g = re.match(r"https://patchwork.kernel.org/patch/(\d+)/?", id_str)
     if g:
-        yield int(g.group(1))
+        yield rpc.normalize_patch_id(g.group(1))
+        return
+    g = re.match(r"https://patchwork.kernel.org/project/.+?/patch/([^/]+)/?", id_str)
+    if g:
+        yield rpc.normalize_patch_id(g.group(1))
         return
 
     # A link for a whole series
