@@ -24,12 +24,20 @@ def get_linux_compiler(args):
 
 
 def compile_linux(args):
-    os.execvp("make", [
+    cmd = [
         "make",
         "CC=%s" % (" ".join(get_linux_compiler(args))), "-j8", "-C",
         os.path.join(os.getcwd())
-    ] + (["-s"] if args.silent else []))
+    ]
+    if args.silent:
+        cmd.append("-s")
 
+    if (not os.path.exists("compile_commands.json")
+            and os.path.exists("scripts/clang-tools/gen_compile_commands.py")):
+        cmd.append("all")
+        cmd.append("compile_commands.json")
+
+    os.execvp(cmd[0], cmd)
 
 # -------------------------------------------------------------------------
 
