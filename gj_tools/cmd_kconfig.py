@@ -152,6 +152,12 @@ class mkt(object):
         "MLX5_CORE_EN": "y",
     }
 
+    block = {
+        "CAIF",
+        "DRM",
+        "IOMMU",
+        "VIRTIO_DMA_SHARED_BUFFER",
+    }
     def select(self, kconf, sym_in_file):
         enable_syms = set()
 
@@ -172,8 +178,12 @@ class mkt(object):
             l = l.next
 
         for sym in kconf.syms.values():
-            if "VIRTIO" in sym.name and "CAIF" not in sym.name and "DRM" not in sym.name and "IOMMU" not in sym.name:
-                enable_syms.add(sym)
+            if "VIRTIO" in sym.name and not sym.name.startswith("ARCH_"):
+                for blocked in self.block:
+                    if blocked in sym.name:
+                        break
+                else:
+                    enable_syms.add(sym)
         return enable_syms
 
 
