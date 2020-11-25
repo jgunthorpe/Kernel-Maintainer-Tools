@@ -75,7 +75,6 @@ class Series(object):
         messages are reviewed."""
         skip_emails = set(I[1] for I in self.to_emails)
         skip_emails.add(self.user_email)
-        skip_emails.add("linux-kernel@vger.kernel.org")
         skip_emails.add("jgg@mellanox.com")
         skip_emails.add("jgg@ziepe.ca")
         newest_commit = 0
@@ -161,6 +160,9 @@ class Series(object):
         for commit in self.commits:
             self.to_emails[cover].update(self.to_emails[commit])
             self.cc_emails[cover].update(self.cc_emails[commit])
+
+        for commit in self.commits:
+            self.cc_emails[commit].difference_update(self.to_emails[commit])
 
     def _fix_emails(self):
         """Use our own message-id for the threading and set the to/cc lists"""

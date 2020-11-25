@@ -43,9 +43,9 @@ def cmd_to_zero_day(args):
     establish_ko_ssh()
 
     if force_push:
-        git_call(["push", config.remote_name] + force_push)
+        git_call(["push", "--signed", config.remote_name] + force_push)
 
-    git_call(["push", config.remote_name] + normal_push)
+    git_call(["push", "--signed", config.remote_name] + normal_push)
 
 
 # -------------------------------------------------------------------------
