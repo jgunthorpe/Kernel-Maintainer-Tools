@@ -4,7 +4,7 @@ from .git import *
 
 
 def get_alternates():
-    res = set()
+    res = list()
     altfn = git_output(["rev-parse", "--git-path", "objects/info/alternates"])
     if not os.path.exists(altfn):
         return res
@@ -13,7 +13,9 @@ def get_alternates():
         for I in F.readlines():
             I = I.strip()
             if I.endswith(b"/objects"):
-                res.add(I[:-8])
+                gdir = I[:-8]
+                if gdir not in res:
+                    res.append(gdir)
     return res
 
 
@@ -32,9 +34,6 @@ def update_repo(repo):
             new_master = git_ref_id("remotes/origin/master")
             git_call(["update-ref", "-m", "git pull", "HEAD", new_master])
 
-    for I in remotes:
-        git_call(["fetch", I])
-
     if remotes:
         print("Updated %s and remotes %s" % (repo.decode(), ",".join(remotes)))
     else:
@@ -42,10 +41,7 @@ def update_repo(repo):
 
 
 def args_update_shared(parser):
-    parser.add_argument("--fetch",
-                        action="store_true",
-                        help="Fetch remotes in the local repository as well",
-                        default=False)
+    pass
 
 
 def cmd_update_shared(args):
@@ -54,5 +50,4 @@ def cmd_update_shared(args):
 
     for I in get_alternates():
         update_repo(I)
-    if args.fetch:
-        git_call(["fetch", "--all"])
+    git_call(["fetch", "--all"])
