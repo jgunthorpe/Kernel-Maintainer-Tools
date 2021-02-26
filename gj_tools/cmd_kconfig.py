@@ -24,9 +24,6 @@ class rdma(object):
         "SMC_DIAG",
         "BLK_DEV_RNBD_CLIENT",
         "BLK_DEV_RNBD_SERVER",
-
-        # Compile debugging
-        "ENABLE_MUST_CHECK",
     }
     force = {}
 
