@@ -26,6 +26,7 @@ class rdma(object):
         "BLK_DEV_RNBD_SERVER",
     }
     force = {}
+    block = {}
 
     def select(self, kconf, sym_in_file):
         # Enable all symbols in drivers/infiniband
@@ -40,6 +41,46 @@ class rdma(object):
         for sym in kconf.syms.values():
             if "INFINIBAND" in sym.name or "RDMA" in sym.name:
                 enable_syms.add(sym)
+        return enable_syms
+
+
+class vfio(object):
+    """A mini no-module compile covering the entire VFIO subsystem and its
+       users"""
+    enable = {
+        "DRM_I915_GVT_KVMGT",
+    }
+    force = {}
+    block = {
+        # needs s390 arch headers
+        "VFIO_PCI_ZDEV",
+        "VFIO_AP",
+        "VFIO_CCW",
+
+        # needs power pcc arch headers
+        "VFIO_SPAPR_EEH",
+        "VFIO_IOMMU_SPAPR_TCE",
+        "VFIO_PCI_NVLINK2",
+
+        "ARM_AMBA",
+    }
+
+    def select(self, kconf, sym_in_file):
+        # Enable all symbols in drivers/vfio
+        enable_syms = set()
+        for fn, syms in sorted(sym_in_file.items()):
+            if fn.startswith("drivers/vfio/"):
+                for sym in syms:
+                    if sym.name not in self.block:
+                        enable_syms.add(sym)
+
+        # And any other related symbols
+        for sym in kconf.syms.values():
+            if "_VFIO_" in sym.name:
+                if sym.name not in self.block:
+                    enable_syms.add(sym)
+        for I in enable_syms:
+            print(I.name)
         return enable_syms
 
 
@@ -213,7 +254,7 @@ def args_kconfig_gen(parser):
     parser.add_argument("mode",
                         action="store",
                         help="Type of configuration content to generate for",
-                        choices={"mkt", "rdma", "hmm"})
+                        choices={"mkt", "rdma", "hmm", "vfio"})
 
 
 def cmd_kconfig_gen(args):
@@ -247,6 +288,8 @@ def cmd_kconfig_gen(args):
         mode = mkt()
     elif args.mode == "hmm":
         mode = hmm()
+    elif args.mode == "vfio":
+        mode = vfio()
 
     done_syms = set(kconf.const_syms.values())
     # These cannot be changed, just ingore them
