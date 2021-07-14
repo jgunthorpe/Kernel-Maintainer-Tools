@@ -104,7 +104,7 @@ def cmd_internal_check_patch(args):
             # Check the the commit being fixed is part of Linus's tree
             fcid = git_commit_id(I[1].partition(b' ')[0])
             if not is_tree_ancestor(fcid):
-                print("E: Invalid Fixes line %r" % (I, ))
+                print("E: Invalid Fixes line (not ancestor) %r" % (I, ))
                 sys.exit(100)
 
             # Check if the Fixes line is cannonically formed
