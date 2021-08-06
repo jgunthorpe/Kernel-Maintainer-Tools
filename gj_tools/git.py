@@ -92,6 +92,17 @@ def git_output_id(args, mode=None, input=None, env=None):
     return git_norm_id(git_output(args, mode, input=input, env=env))
 
 
+def git_ref_add_suffix(revish, suffix):
+    """Append a suffix to a rev-parse argument, get ^{commit} or similar. If
+    necessary this converts revish to a proper rev before doing so."""
+    if isinstance(revish, bytes):
+        if revish.startswith(b":/"):
+            revish = git_ref_id(revish)
+    elif revish.startswith(":/"):
+        revish = git_ref_id(revish)
+    return bytes_join(revish, suffix)
+
+
 def git_ref_id(thing, fail_is_none=False):
     """Return the git ID for a ref or None"""
     try:
@@ -105,8 +116,8 @@ def git_ref_id(thing, fail_is_none=False):
 
 def git_commit_id(thing, fail_is_none=False):
     """Returns a commit ID for thing. If thing is a tag or something then it is
-    converted to a object ID"""
-    return git_ref_id(bytes_join(thing, "^{commit}"),
+    converted to an object ID"""
+    return git_ref_id(git_ref_add_suffix(thing, "^{commit}"),
                       fail_is_none=fail_is_none)
 
 

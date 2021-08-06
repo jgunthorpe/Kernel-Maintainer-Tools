@@ -1,6 +1,7 @@
 import contextlib
 import datetime
 import email.utils
+import itertools
 import mailbox
 import os
 import re
@@ -161,7 +162,25 @@ class Series(object):
             self.to_emails[cover].update(self.to_emails[commit])
             self.cc_emails[cover].update(self.cc_emails[commit])
 
+        # everyone gets everything
+        all_to = set()
+        all_cc = set()
         for commit in self.commits:
+            all_to.update(self.to_emails[commit])
+            all_cc.update(self.cc_emails[commit])
+        for commit in self.commits:
+            self.to_emails[commit].update(all_to)
+            self.cc_emails[commit].update(all_cc)
+
+        all_del = set()
+        for todel in self.args.no_email:
+            for I in itertools.chain(all_to, all_cc):
+                if todel in I[1]:
+                    all_del.add(I);
+
+        for commit in self.commits:
+            self.to_emails[commit].difference_update(all_del)
+            self.cc_emails[commit].difference_update(all_del)
             self.cc_emails[commit].difference_update(self.to_emails[commit])
 
     def _fix_emails(self):
@@ -213,6 +232,8 @@ class Series(object):
             "-o",
             dirname,
             "--no-thread",
+            "--from",
+            "--base=" + self.patch_commits.ancestor,
             f"--subject-prefix={prefix}",
         ]
         if self.version != 1:
@@ -302,11 +323,15 @@ def args_send(parser):
         "--base",
         action="append",
         help="Set the 'upstream' point. Automatically all remote branches",
-        default=None)
+        default=[])
     parser.add_argument("--head",
                         action="store",
                         help="Top most commit to send",
                         default="HEAD")
+    parser.add_argument("--single",
+                        action="store",
+                        help="Single commit to send",
+                        default=None)
     parser.add_argument("--name",
                         action="store",
                         help="series name",
@@ -318,6 +343,10 @@ def args_send(parser):
                         action="append",
                         help="To email address",
                         default=[])
+    parser.add_argument("--no-email",
+                        action="append",
+                        help="Do not send to these email addresses",
+                        default=[])
     parser.add_argument("--get_maintainers",
                         action="store_true",
                         help="Use scripts/get_maintainer.pl",
@@ -326,6 +355,10 @@ def args_send(parser):
 
 def cmd_send(args):
     """Like git send-email but keeps a record of what it did in a branch"""
+    if args.single:
+        args.head = git_ref_id(args.single)
+        args.base.append(git_ref_add_suffix(args.head, "^"))
+
     commits = git_base_fewest_commits(args.base, args.head)
     commits.sanity_check()
 
