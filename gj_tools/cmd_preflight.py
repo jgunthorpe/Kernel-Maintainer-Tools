@@ -12,7 +12,6 @@ from . import config
 
 def args_linus_check_merge(parser):
     parser.add_argument("--linus",
-                        nargs=1,
                         default="remotes/origin/master",
                         help="The branch for Linus's master")
     parser.add_argument("refs",
