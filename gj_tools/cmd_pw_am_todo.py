@@ -39,7 +39,7 @@ class RPC(object):
 
     def check_json(self, r: requests.Response):
         if r.status_code != 200:
-            print(f"patchworks failed {r.json()}")
+            print(f"patchworks failed {r.text}")
             r.raise_for_status()
             raise ValueError("Bad patchworks response")
         return r.json()
@@ -72,7 +72,7 @@ class RPC(object):
         return self.check_json(r)
 
     def modify_patch(self, patch_id, json):
-        r = requests.patch(self.url + "1.1/patches/%d/" % (patch_id),
+        r = requests.patch(self.url + "1.2/patches/%d/" % (patch_id),
                            json=json,
                            auth=self.auther)
         return self.check_json(r)
@@ -203,23 +203,45 @@ def cmd_internal_applypatch_msg(args):
         lines = F.readlines()
 
     lines.reverse()
-    m = re.match(rb'^Message-Id:\s*<?([^>]+)>?$', lines[1])
-    if not m:
+    link_hdr = None;
+    for I in range(len(lines)):
+        if not lines[I].strip():
+            break
+
+        m = re.match(rb'^Message-Id:\s*<?([^>]+)>?$', lines[I])
+        if m:
+            del lines[I]
+            n_link_hdr = form_link_header(m.group(1)).encode()
+            if link_hdr is not None:
+                if n_link_hdr != link_hdr:
+                    print(f"Mismatch {n_link_hdr!r} {link_hdr!r}")
+            link_hdr = n_link_hdr
+
+        m = re.match(rb'^Link:\s+http.*$', lines[I])
+        if m:
+            n_link_hdr = lines[I].strip()
+            del lines[I]
+            if link_hdr is not None:
+                if n_link_hdr != link_hdr:
+                    print(f"Mismatch {n_link_hdr!r} {link_hdr!r}")
+            else:
+                link_hdr = n_link_hdr
+
+    if link_hdr is None:
         print(
             "No message id in patch commit, set 'git config am.messageid true' ?\n",
             file=sys.stderr)
         sys.exit(100)
 
-    del lines[1]
-    for ln, I in enumerate(lines):
+    for end_trailers, I in enumerate(lines):
         if not I.strip():
             break
     else:
         print("Bad commit message format\n")
 
-    while lines[ln - 1].startswith(b"Fixes"):
-        ln = ln - 1
-    lines.insert(ln, form_link_header(m.group(1)).encode() + b"\n")
+    while lines[end_trailers - 1].startswith(b"Fixes"):
+        end_trailers = end_trailers - 1
+    lines.insert(end_trailers, link_hdr + b"\n")
 
     # Remove duplicated merger signed-off-by lines.
     for ln, I in enumerate(lines):
