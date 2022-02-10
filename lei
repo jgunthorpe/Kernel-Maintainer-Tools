@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# ./lei q -I https://lore.kernel.org/all/ -o ~/mail/lei/linux-mm --dedupe=mid '(l:linux-mm.kvack.org) AND rt:1.week.ago..'
+# ./lei q -I https://lore.kernel.org/all/ -o ~/mail/lei/vfio --dedupe=mid '(dfn:drivers/vfio/*) AND rt:1.week.ago..'
+
+mkdir -p $HOME/.config/lei $HOME/.cache/public-inbox $HOME/.cache/lei $HOME/.local/share/lei
+exec docker run --rm -ti \
+      -v $HOME/.config/lei:$HOME/.config/lei \
+      -v $HOME/.cache/public-inbox:$HOME/.cache/public-inbox \
+      -v $HOME/.cache/lei:$HOME/.cache/lei \
+      -v $HOME/.local/share/lei:$HOME/.local/share/lei \
+      -v $HOME/mail/lei:$HOME/mail/lei \
+      -e HOME=$HOME \
+      -w $HOME \
+      -u=1000:1000 \
+      lei:latest \
+      /usr/local/bin/lei "$@"
