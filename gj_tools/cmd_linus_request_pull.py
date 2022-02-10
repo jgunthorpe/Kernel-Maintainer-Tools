@@ -156,7 +156,7 @@ def cmd_linus_pull_request(args):
         print("From %s Mon Sep 17 00:00:00 2001" % (tag_commit), file=F)
         print("From: Jason Gunthorpe <jgg@nvidia.com>", file=F)
         print(
-            "To: Linus Torvalds <torvalds@linux-foundation.org>, Doug Ledford <dledford@redhat.com>",
+            "To: Linus Torvalds <torvalds@linux-foundation.org>",
             file=F)
         print("Cc: linux-rdma@vger.kernel.org, linux-kernel@vger.kernel.org",
               file=F)
