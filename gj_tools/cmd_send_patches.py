@@ -5,6 +5,8 @@ import itertools
 import mailbox
 import os
 import re
+import shlex
+import sys
 import time
 import urllib
 
@@ -274,10 +276,12 @@ class Series(object):
         mails_commit = git_output_id(["commit-tree", tree, "-F", "-"],
                                      input="Emails as-sent".encode())
 
+        gj_cmd = shlex.join(sys.argv[1:])
         link = form_link_header(f"0-{self.id_suffix}")
         msg = f"""Record of sent patches: {self.name}
 
 Series: {link}
+Command: gj {gj_cmd}
 Version: {self.version}
 """
         all_commit = git_output_id([
@@ -286,6 +290,26 @@ Version: {self.version}
         ],
                                    input=msg.encode())
         return all_commit
+
+    def do_push(self):
+        if not self.cover_commit:
+            return
+        fn = self.message_fns[self.cover_commit].decode()
+        with open(fn,"r") as F:
+            msg = F.read()
+        g = re.search(
+            r"^This is on github: https://github.com/jgunthorpe/linux/commits/(.*)$",
+            msg,re.MULTILINE)
+        if not g:
+            return
+        print(f"Pushing to github branch {g.group(1)}")
+        git_call([
+            "push",
+            "git@github.com:jgunthorpe/linux.git",
+            "-f",
+            f"{self.cover_commit}:refs/heads/{g.group(1)}",
+            "linus/master:master",
+        ])
 
 
 def get_aliases():
@@ -372,6 +396,8 @@ def cmd_send(args):
     with tempfile.TemporaryDirectory() as dirname:
         fns = series.format_patches(dirname)
         branch = series.version_branches[series.version]
+
+        series.do_push()
 
         subprocess.check_call(["emacs"] + fns)
         all_commit = series.make_commit(dirname)
