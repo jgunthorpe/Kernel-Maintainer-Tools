@@ -308,7 +308,7 @@ Version: {self.version}
             "git@github.com:jgunthorpe/linux.git",
             "-f",
             f"{self.cover_commit}:refs/heads/{g.group(1)}",
-            "linus/master:master",
+            "linus/master:linus",
         ])
 
 
