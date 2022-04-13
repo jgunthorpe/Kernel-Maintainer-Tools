@@ -90,7 +90,8 @@ class Series(object):
                 if '#' in val:
                     val = val.partition([0])
                 addr = email.utils.parseaddr(val)
-                if addr == ('', '') or addr[1] in skip_emails:
+                if (addr == ('', '') or addr[1] in skip_emails
+                        or '@' not in addr[1]):
                     continue
 
                 lkey = key.lower()
