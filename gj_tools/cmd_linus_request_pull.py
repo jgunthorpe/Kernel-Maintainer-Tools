@@ -158,7 +158,7 @@ def cmd_linus_pull_request(args):
         print(
             "To: Linus Torvalds <torvalds@linux-foundation.org>",
             file=F)
-        print("Cc: linux-rdma@vger.kernel.org, linux-kernel@vger.kernel.org",
+        print("Cc: linux-rdma@vger.kernel.org, linux-kernel@vger.kernel.org, Leon Romanovsky <leonro@nvidia.com>",
               file=F)
         write_body(F, args, branch_desc)
         F.write(rp.decode())
