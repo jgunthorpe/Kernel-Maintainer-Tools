@@ -310,24 +310,10 @@ def establish_ko_ssh(always_prompt=False):
     except subprocess.CalledProcessError as ex:
         res = ex.output
 
-    res = res.strip()
-    if res == b"True":
-        if always_prompt:
-            print("Press ENTER ")
-            input()
-        return
-
-    if res != b"False":
-        raise ValueError("Unable to communicate with k.o %r" % (res))
-
-    # FIXME: we could use ykman oath but we have to rekey and there seems to
-    # be a problem with scdaemon?
-    print("Press YubiKey button for HTOP")
-    keys = input()
-    if not re.match(r"\d" * 6, keys):
-        raise ValueError("Invalid HTOP %r" % (keys))
-    subprocess.check_call(
-        ["ssh", "git@gitolite.kernel.org", "2fa", "val-session", keys])
+    if always_prompt:
+        print("Press ENTER ")
+        input()
+    return
 
 
 def git_push(remote, things=None, force=False):
