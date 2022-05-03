@@ -1,6 +1,8 @@
 #!/bin/bash
 set -x
 
+scp mlx:~/.ssh/*sk.pub ~/.ssh/
+scp mlx:~/.ssh/*sk ~/.ssh/
 scp mlx:~/archive/pass*.kdbx ~/archive/
 scp mlx:~/oss/kernel-maint/cmds ~/oss/kernel-maint/
 scp mlx:~/oss/sync/cms.cfg ~/oss/sync/
