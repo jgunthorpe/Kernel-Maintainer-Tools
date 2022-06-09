@@ -24,6 +24,8 @@ class rdma(object):
         "SMC_DIAG",
         "BLK_DEV_RNBD_CLIENT",
         "BLK_DEV_RNBD_SERVER",
+        # SMB RDMA
+        "CIFS_SMB_DIRECT",
     }
     force = {}
     block = {}
