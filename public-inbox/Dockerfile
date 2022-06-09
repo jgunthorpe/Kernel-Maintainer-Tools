@@ -1,6 +1,6 @@
 # docker build public-inbox/ -t lei
 FROM ubuntu:focal
-RUN apt-get -qq update -y && apt-get -qq upgrade
+RUN apt-get -qq update -y && apt-get -qq upgrade # 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
@@ -23,6 +23,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     libtimedate-perl \
     liburi-perl \
     make \
+    nano \
     pkg-config \
     sqlite3 \
     xapian-tools
