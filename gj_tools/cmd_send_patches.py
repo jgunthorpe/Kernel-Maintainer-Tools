@@ -89,16 +89,8 @@ class Series(object):
                 val = val.decode()
                 if '#' in val:
                     val = val.partition([0])
-                addr = email.utils.parseaddr(val)
-                if (addr == ('', '') or addr[1] in skip_emails
-                        or '@' not in addr[1]):
-                    continue
 
                 lkey = key.lower()
-                if lkey.endswith("-by") or lkey in {"cc"}:
-                    self.cc_emails[commit].add(addr)
-                if lkey in {"to"}:
-                    self.to_emails[commit].add(addr)
                 if lkey == "fixes":
                     fcommit = val.split(' ')[0]
                     fseries = Series(self.args, GitRange(fcommit, fcommit + "^"))
@@ -106,6 +98,16 @@ class Series(object):
                     fcommit = fseries.commits[0]
                     self.to_emails[commit].update(fseries.to_emails[fcommit])
                     self.cc_emails[commit].update(fseries.cc_emails[fcommit])
+                    continue
+
+                addr = email.utils.parseaddr(val)
+                if (addr == ('', '') or addr[1] in skip_emails
+                        or '@' not in addr[1]):
+                    continue
+                if lkey.endswith("-by") or lkey in {"cc"}:
+                    self.cc_emails[commit].add(addr)
+                if lkey in {"to"}:
+                    self.to_emails[commit].add(addr)
 
             serial = int(time.time() - newest_commit)
             assert (serial > 0)
