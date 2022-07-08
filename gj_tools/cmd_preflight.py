@@ -25,6 +25,8 @@ def cmd_linus_check_merge(args):
     to_test = [git_commit_id(I) for I in args.refs]
     linus = git_commit_id(args.linus)
     dot_config = os.path.abspath(".config")
+    if not os.path.exists(dot_config):
+        dot_config = os.path.abspath("build-x86/.config")
 
     # Construct a trial merge between the two trees to evaluate conflicts
     with git_temp_worktree():
