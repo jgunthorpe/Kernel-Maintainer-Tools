@@ -60,3 +60,5 @@ git -C /home/jgg/oss/sync fetch --prune origin
 git -C /home/jgg/oss/sync reset --hard origin
 scp mlx:~/oss/sync/cms.cfg ~/oss/sync/
 rsync -a mlx:~/mail/.cms/ ~/mail/.cms/
+
+rsync -av mlx:~/oss/vscode ~/oss/
