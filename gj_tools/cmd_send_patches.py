@@ -196,6 +196,13 @@ class Series(object):
                 _, msg = mb.popitem()
                 assert commit == git_norm_id(msg.get_from().partition(' ')[0])
 
+                try:
+                    mb.popitem()
+                except KeyError as e:
+                    assert repr(e) == "KeyError('No messages in mailbox')"
+                else:
+                    raise RuntimeError(f"Invalid Mailbox Format, line starts with 'From ' ? {fn}")
+
                 msg["Message-Id"] = f"<{idx}-{self.id_suffix}>"
                 if idx != 0:
                     msg["In-Reply-To"] = f"<0-{self.id_suffix}>"
