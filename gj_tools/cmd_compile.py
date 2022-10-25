@@ -1,3 +1,5 @@
+import copy
+
 from .git import *
 from . import config
 
@@ -94,7 +96,10 @@ def is_rdma_core():
 
 def compile_rdma_core():
     if not os.path.isdir("build"):
-        subprocess.check_call(["./build.sh"])
+        env = copy.copy(os.environ)
+        env["EXTRA_CMAKE_FLAGS"] = "-DCMAKE_EXPORT_COMPILE_COMMANDS=true"
+        env["CC"] = config.compiler.split()[-1]
+        subprocess.check_call(["./build.sh"], env=env)
     os.execvp("ninja", ["ninja", "-C", os.path.join(os.getcwd(), "build")])
 
 
