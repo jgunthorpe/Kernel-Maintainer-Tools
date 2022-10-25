@@ -26,6 +26,12 @@ def get_linux_compiler(args, build_dir):
     return config.compiler.split()[-1:]
 
 
+def get_j():
+    # sort of fuzzy way to deal with efficiency cores
+    if os.cpu_count() > 16:
+        return "-j14" # 8 way hyperthreaded
+    return "-j8"
+
 def compile_linux_x86(args):
     tot = os.getcwd()
     build_dir = tot
@@ -35,7 +41,7 @@ def compile_linux_x86(args):
         build_dir = os.path.join(tot, "build-x86")
 
     cmd.extend(
-        ["CC=%s" % (" ".join(get_linux_compiler(args, build_dir))), "-j8"])
+        ["CC=%s" % (" ".join(get_linux_compiler(args, build_dir))), get_j()])
 
     if args.silent:
         cmd.append("-s")
@@ -57,7 +63,7 @@ def tuxmake_linux(args, image, arch, prefix):
     ]
     cmd.extend([
         "make", "-C", tot, f"O={os.path.basename(build_dir)}", f"ARCH={arch}",
-        f"CROSS_COMPILE={prefix}", "-j8"
+        f"CROSS_COMPILE={prefix}", get_j()
     ])
 
     if args.silent:
