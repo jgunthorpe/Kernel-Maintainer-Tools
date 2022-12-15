@@ -90,6 +90,11 @@ cross_linux = {
                                image="docker.io/tuxmake/powerpc_gcc:latest",
                                arch="powerpc",
                                prefix="powerpc64le-linux-gnu-"),
+    "arc":
+    lambda args: tuxmake_linux(args,
+                               image="docker.io/tuxmake/arc_gcc:latest",
+                               arch="arc",
+                               prefix="arc-elf32-"),
 }
 
 # -------------------------------------------------------------------------
