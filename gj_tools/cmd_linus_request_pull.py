@@ -24,11 +24,9 @@ import time
 from .git import *
 from . import config
 
-pull_url = "git://git.kernel.org/pub/scm/linux/kernel/git/rdma/rdma.git"
-
 
 def write_body(F, args, branch_desc):
-    print("Subject: [GIT PULL] Please pull RDMA subsystem changes", file=F)
+    print(f"Subject: [GIT PULL] Please pull {args.kind.upper()} subsystem changes", file=F)
     F.write("\n")
     print("Hi Linus,", file=F)
     F.write("\n")
@@ -71,6 +69,11 @@ def args_linus_pull_request(parser):
                         action="store_true",
                         default=False,
                         help="Use 'tag'-merged as well")
+    parser.add_argument("--kind",
+                        action="store",
+                        choices={"rdma", "iommufd"},
+                        default="rdma",
+                        help="The branch to generate the pull request for")
     parser.add_argument("branch",
                         help="The branch to generate the pull request for")
 
@@ -79,13 +82,17 @@ def cmd_linus_pull_request(args):
     """Generate a pull request email for Linus.
 
     For the RDMA tree."""
+
+    if args.kind == "iommufd" and args.tag == "for-linus":
+        args.tag = "for-linus-iommufd"
     tag = "tags/" + args.tag
 
     linus_remote = re.match(r"remotes/(.*)/.*", args.linus).group(1)
     git_call(["fetch", linus_remote])
 
     branch_desc = git_output(
-        ["config", "branch.%s.description" % (args.branch)])
+        ["config",
+         "branch.%s.description" % (args.branch)])
 
     commits = GitRange("heads/" + args.branch, args.linus)
 
@@ -98,13 +105,22 @@ def cmd_linus_pull_request(args):
     print(b"\n".join(
         strip_pgp(git_read_object("tag", git_ref_id(args.tag)).desc)).decode())
 
+    if args.kind == "rdma":
+        ko_repo = "git://git.kernel.org/pub/scm/linux/kernel/git/rdma/rdma.git"
+        ko_git_remote = config.remote_name
+    elif args.kind == "iommufd":
+        ko_repo = "git://git.kernel.org/pub/scm/linux/kernel/git/jgg/iommufd.git"
+        ko_git_remote = "ko-iommufd"
+    else:
+        raise ValueError("Bad kind")
+
     if args.with_merged:
         git_call([
-            "request-pull", args.linus, pull_url,
+            "request-pull", args.linus, ko_repo,
             git_commit_id(args.with_merged)
         ])
     else:
-        git_call(["request-pull", args.linus, pull_url, commits.newest])
+        git_call(["request-pull", args.linus, ko_repo, commits.newest])
 
     tag_commit = git_commit_id(tag, fail_is_none=True)
     if commits.newest != tag_commit:
@@ -113,7 +129,7 @@ def cmd_linus_pull_request(args):
         commits.fork_gitk()
         sys.exit(100)
 
-    git_push(config.remote_name, to_push, force=True)
+    git_push(ko_git_remote, to_push, force=True)
 
     # Get rid of HOME from the environment. This gets rid of the default
     # .gitconfig which contains aliases for git.kernel.org that change the
@@ -125,12 +141,8 @@ def cmd_linus_pull_request(args):
 
     for I in range(0, 10):
         try:
-            rp = subprocess.check_output([
-                "git", "request-pull", args.linus,
-                "git://git.kernel.org/pub/scm/linux/kernel/git/rdma/rdma.git",
-                tag
-            ],
-                                         env=env)
+            rp = subprocess.check_output(
+                ["git", "request-pull", args.linus, ko_repo, tag], env=env)
             break
         except subprocess.CalledProcessError:
             # The above goes to the kernel.org mirror network which takes a bit to catch up
@@ -158,8 +170,14 @@ def cmd_linus_pull_request(args):
         print(
             "To: Linus Torvalds <torvalds@linux-foundation.org>",
             file=F)
-        print("Cc: linux-rdma@vger.kernel.org, linux-kernel@vger.kernel.org, Leon Romanovsky <leonro@nvidia.com>",
-              file=F)
+        if args.kind == "rdma":
+            print(
+                "Cc: linux-rdma@vger.kernel.org, linux-kernel@vger.kernel.org, Leon Romanovsky <leonro@nvidia.com>",
+                file=F)
+        elif args.kind == "iommufd":
+            print(
+                "Cc: iommu@lists.linux.dev, kvm@vger.kernel.org, linux-kernel@vger.kernel.org, Kevin Tian <kevin.tian@intel.com>",
+                file=F)
         write_body(F, args, branch_desc)
         F.write(rp.decode())
 
