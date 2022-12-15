@@ -74,7 +74,7 @@ def show_cycle_progress(linus):
     for I in git_output(
         ["log", "-n", "2000", "--decorate=full", "--pretty=%h %D", linus],
             mode="lines"):
-        g = re.search(rb"tag: (refs/tags/v[45][^, ]+)", I)
+        g = re.search(rb"tag: (refs/tags/v[456][^, ]+)", I)
         if g is None:
             continue
         obj = git_read_object("tag", g.group(1))
