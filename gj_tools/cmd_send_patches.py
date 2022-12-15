@@ -88,7 +88,7 @@ class Series(object):
             for key, val in git_trailers(commit):
                 val = val.decode()
                 if '#' in val:
-                    val = val.partition([0])
+                    val = val.partition('#')[0]
 
                 lkey = key.lower()
                 if lkey == "fixes":
