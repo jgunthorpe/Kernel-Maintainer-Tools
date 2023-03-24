@@ -95,6 +95,11 @@ cross_linux = {
                                image="docker.io/tuxmake/arc_gcc:latest",
                                arch="arc",
                                prefix="arc-elf32-"),
+    "arm":
+    lambda args: tuxmake_linux(args,
+                               image="docker.io/tuxmake/arm_gcc:latest",
+                               arch="arm",
+                               prefix="arm-linux-gnueabihf-"),
 }
 
 # -------------------------------------------------------------------------
