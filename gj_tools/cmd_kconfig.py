@@ -309,7 +309,8 @@ def cmd_kconfig_gen(args):
     done_syms = set(kconf.const_syms.values())
     # These cannot be changed, just ingore them
     for name, sym in kconf.syms.items():
-        if name.startswith("CC_HAS_") or name.startswith("HAVE_ARCH_"):
+        if (name.startswith("CC_HAS_") or name.startswith("HAVE_ARCH_") or
+            name.endswith("_LLVM") or name.endswith("_CLANG")):
             done_syms.add(sym)
 
     enable_syms = mode.select(kconf, sym_in_file)
@@ -319,6 +320,8 @@ def cmd_kconfig_gen(args):
     for I in range(0, 10):
         for I in sorted(enable_syms - done_syms, key=lambda x: x.name):
             if I.type not in kconfiglib._BOOL_TRISTATE:
+                if I.name in mode.force:
+                    I.set_value(mode.force[I.name])
                 done_syms.add(I)
                 continue
 
@@ -339,6 +342,8 @@ def cmd_kconfig_gen(args):
                 for J in kconfiglib.expr_items(I.direct_dep):
                     if J.name is None:
                         done_syms.add(J)
+                    if J.name in mode.block or J.name == "y":
+                        continue;
                     enable_syms.add(J)
         if not (enable_syms - done_syms):
             break
