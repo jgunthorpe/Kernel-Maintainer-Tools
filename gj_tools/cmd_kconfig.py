@@ -106,7 +106,6 @@ class mkt(object):
         "PID_NS",
         "PROC_SYSCTL",
         "UNIX98_PTYS",
-        "MANDATORY_FILE_LOCKING",
 
         # From systemd README
         "DEVTMPFS",
@@ -153,6 +152,16 @@ class mkt(object):
         "SERIAL_8250_CONSOLE",
         "SERIAL_EARLYCON",
         "EARLY_PRINTK",
+        "INTEL_IOMMU",
+        "INTEL_IOMMU_SVM",
+        "INTEL_IOMMU_DEFAULT_ON",
+        "INTEL_IOMMU_SCALABLE_MODE_DEFAULT_ON",
+        "IRQ_REMAP",
+
+        "TRANSPARENT_HUGEPAGE",
+        "TRANSPARENT_HUGEPAGE_ALWAYS",
+        "HUGETLBFS",
+        "VFIO_PCI",
 
         # For debugging
         "DEBUG_ATOMIC_SLEEP",
@@ -175,7 +184,6 @@ class mkt(object):
         "UBSAN_SANITIZE_ALL",
         "UNWINDER_FRAME_POINTER",
         "WQ_WATCHDOG",
-        "TEST_HMM",
     }
 
     force = {
@@ -184,12 +192,14 @@ class mkt(object):
         "UEVENT_HELPER_PATH": "",
         "FW_LOADER_USER_HELPER": "n",
         "RT_GROUP_SCHED": "n",
-
         # For RDMA
         "INFINIBAND": "m",
         "MLX5_CORE": "m",
         "MLX5_INFINIBAND": "m",
         "MLX5_CORE_EN": "y",
+
+        "MEMORY_ISOLATION": "y",
+        "COMPACTION": "y",
     }
 
     block = {
@@ -197,6 +207,9 @@ class mkt(object):
         "DRM",
         "IOMMU",
         "VIRTIO_DMA_SHARED_BUFFER",
+        "UID16",
+        "ARCH_NO_PREEMPT",
+        "VIRTIO_HARDEN_NOTIFICATION",
     }
     def select(self, kconf, sym_in_file):
         enable_syms = set()
@@ -213,7 +226,7 @@ class mkt(object):
         # expert
         l = kconf.syms["EXPERT"].nodes[0].list
         while l is not None:
-            if l.item._str_default() == "y":
+            if l.item._str_default() == "y" and l.item.name not in self.block:
                 enable_syms.add(l.item)
             l = l.next
 
