@@ -351,6 +351,12 @@ def expand_to(args):
         res.add(addr)
     return res
 
+def nth_cover(arg):
+    head = "HEAD"
+    for _ in range(0,int(arg)):
+        cover = git_ref_id(f"{head}^{{/^cover-letter: }}")
+        head = git_ref_add_suffix(cover, "^")
+    return cover
 
 def args_send(parser):
     parser.add_argument(
@@ -362,6 +368,12 @@ def args_send(parser):
                         action="store",
                         help="Top most commit to send",
                         default="HEAD")
+    parser.add_argument("--cover-head",
+                        dest="head",
+                        action="store",
+                        help="nth cover letter to use as head",
+                        type=nth_cover
+                        )
     parser.add_argument("--single",
                         action="store",
                         help="Single commit to send",
