@@ -271,6 +271,13 @@ def args_kconfig_gen(parser):
                         help="Type of configuration content to generate for",
                         choices={"mkt", "rdma", "hmm", "vfio"})
 
+def set_x86():
+    os.environ["ARCH"] = "x86"
+    os.environ["SRCARCH"] = "x86"
+    os.environ["CC"] = config.compiler.split()[-1]
+    os.environ["CLANG_FLAGS"] = "-fintegrated-as"
+    os.environ["HOSTCXX"] = os.environ["CC"].replace("clang", "clang++")
+    os.environ["LD"] = "ld"
 
 def cmd_kconfig_gen(args):
     """Generate a kconfig for the given ruleset"""
@@ -281,11 +288,7 @@ def cmd_kconfig_gen(args):
     import kconfiglib
 
     os.environ["srctree"] = "."
-    os.environ["ARCH"] = "x86"
-    os.environ["SRCARCH"] = "x86"
-    os.environ["HOSTCXX"] = config.compiler.replace("gcc", "g++")
-    os.environ["CC"] = config.compiler
-    os.environ["LD"] = "ld"
+    set_x86()
 
     kconf = kconfiglib.Kconfig(warn_to_stderr=False)
 
