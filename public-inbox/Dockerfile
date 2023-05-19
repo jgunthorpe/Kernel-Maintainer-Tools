@@ -1,5 +1,5 @@
 # docker build public-inbox/ -t lei
-FROM ubuntu:focal
+FROM ubuntu:jammy
 RUN apt-get -qq update -y && apt-get -qq upgrade # 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -30,7 +30,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 
 RUN mkdir -p /opt/ && \
     git -C /opt/ clone https://public-inbox.org/public-inbox.git && \
-    git -C /opt/public-inbox/ reset --hard 303c3507b4aefc0e08d792de02357ea9ab0fc322
+    git -C /opt/public-inbox/ reset --hard v1.9.0
 
 RUN mkdir -p /root/.cache/public-inbox/inline-c/
 
@@ -39,4 +39,5 @@ RUN cd /opt/public-inbox && \
     make && \
     make install
 
-# RUN make test
+#RUN cd /opt/public-inbox && \
+#    make test
