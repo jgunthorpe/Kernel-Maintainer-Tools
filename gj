@@ -23,6 +23,7 @@ cmd_modules = {
     "cmd_pw_am_todo",
     "cmd_review",
     "cmd_send_patches",
+    "cmd_todo",
     "cmd_update_shared",
 }
 
