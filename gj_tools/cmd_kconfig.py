@@ -51,11 +51,26 @@ class vfio(object):
        users"""
     enable = {
         "DRM_I915_GVT_KVMGT",
+        "OMAP_IOMMU",
+        "ROCKCHIP_IOMMU",
+        "SUN50I_IOMMU",
+        "EXYNOS_IOMMU",
+        "IPMMU_VMSA",
+        "APPLE_DART",
+        "ARM_SMMU",
+        "MTK_IOMMU",
+        "QCOM_IOMMU",
+        "VIRTIO_PCI",
+        "VIRTIO_IOMMU",
+        "SPRD_IOMMU",
     }
-    force = {}
+    force = {
+        "RANDSTRUCT_FULL": "n",
+        "RANDSTRUCT_NONE": "y",
+    }
     block = {
         # needs s390 arch headers
-        "VFIO_PCI_ZDEV",
+        "VFIO_PCI_ZDEV_KVM",
         "VFIO_AP",
         "VFIO_CCW",
 
@@ -65,13 +80,23 @@ class vfio(object):
         "VFIO_PCI_NVLINK2",
 
         "ARM_AMBA",
+        "VFIO_CDX",
+
+        "INTEL_IOMMU_BROKEN_GFX_WA",
+        "IOMMUFD_VFIO_CONTAINER",
+        "PREEMPT_RT",
+
+        "GENERIC_ATOMIC64",
     }
 
     def select(self, kconf, sym_in_file):
         # Enable all symbols in drivers/vfio
         enable_syms = set()
         for fn, syms in sorted(sym_in_file.items()):
-            if fn.startswith("drivers/vfio/"):
+            if (fn.startswith("drivers/vfio/")
+                    or fn.startswith("drivers/iommu/intel/")
+                    or fn.startswith("drivers/iommu/amd/")
+                    or fn.startswith("drivers/iommu/iommufd/")):
                 for sym in syms:
                     if sym.name not in self.block:
                         enable_syms.add(sym)
@@ -81,8 +106,6 @@ class vfio(object):
             if "_VFIO_" in sym.name:
                 if sym.name not in self.block:
                     enable_syms.add(sym)
-        for I in enable_syms:
-            print(I.name)
         return enable_syms
 
 
@@ -320,7 +343,7 @@ def cmd_kconfig_gen(args):
     enable_syms.update(kconf.syms[I] for I in mode.enable)
     enable_syms.update(kconf.syms[I] for I in mode.force.keys())
     orig_enable = set(enable_syms)
-    for I in range(0, 10):
+    for _ in range(0, 10):
         for I in sorted(enable_syms - done_syms, key=lambda x: x.name):
             if I.type not in kconfiglib._BOOL_TRISTATE:
                 if I.name in mode.force:
@@ -334,8 +357,8 @@ def cmd_kconfig_gen(args):
                 continue
 
             I.set_value(val)
-            if I.str_value == val or I.str_value == "y" or (
-                    val == "y" and I.str_value == "m"):
+            if (I.str_value == val or (val == "y" and I.str_value == "y")
+                    or (val == "y" and I.str_value == "m")):
                 done_syms.add(I)
             else:
                 if I.name == "KASAN":
@@ -346,7 +369,7 @@ def cmd_kconfig_gen(args):
                     if J.name is None:
                         done_syms.add(J)
                     if J.name in mode.block or J.name == "y":
-                        continue;
+                        continue
                     enable_syms.add(J)
         if not (enable_syms - done_syms):
             break
@@ -363,8 +386,8 @@ def cmd_kconfig_gen(args):
     # Check that all requested settings were realized
     for I in sorted(orig_enable, key=lambda x: x.name):
         val = mode.force.get(I.name, "y")
-        if I.str_value == val or I.str_value == "y" or (val == "y" and
-                                                        I.str_value == "m"):
+        if (I.str_value == val or (val == "y" and I.str_value == "y")
+                or (val == "y" and I.str_value == "m")):
             continue
         print("  ", I.name, I.str_value, [node.filename for node in I.nodes])
 
