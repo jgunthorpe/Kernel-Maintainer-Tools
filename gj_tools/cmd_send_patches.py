@@ -117,6 +117,7 @@ class Series(object):
         skip_emails = set()
         skip_emails.add(self.user_email)
         skip_emails.add("linux-kernel@vger.kernel.org")
+        skip_emails.add("stable@vger.kernel.org")
         skip_emails.add("jgg@mellanox.com")
         skip_emails.add("jgg@ziepe.ca")
         for commit in self.commits:
