@@ -211,7 +211,7 @@ class mkt(object):
 
     force = {
         # From systemd
-        "SYSFS_DEPRECATED": "n",
+        #"SYSFS_DEPRECATED": "n",
         "UEVENT_HELPER_PATH": "",
         "FW_LOADER_USER_HELPER": "n",
         "RT_GROUP_SCHED": "n",
@@ -223,6 +223,14 @@ class mkt(object):
 
         "MEMORY_ISOLATION": "y",
         "COMPACTION": "y",
+    #        "VFIO_MDEV": "m",
+    #        "SAMPLE_VFIO_MDEV_MTTY": "m",
+    #        "SAMPLE_VFIO_MDEV_MDPY": "m",
+    #        "SAMPLE_VFIO_MDEV_MDPY_FB": "m",
+    #        "SAMPLE_VFIO_MDEV_MBOCHS": "m",
+
+        "RANDSTRUCT_FULL": "n",
+        "RANDSTRUCT_NONE": "y",
     }
 
     block = {
