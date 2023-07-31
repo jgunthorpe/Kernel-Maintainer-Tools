@@ -208,7 +208,7 @@ def cmd_internal_applypatch_msg(args):
         if not lines[I].strip():
             break
 
-        m = re.match(rb'^Message-Id:\s*<?([^>]+)>?$', lines[I])
+        m = re.match(rb'^Message-I[dD]:\s*<?([^>]+)>?$', lines[I])
         if m:
             del lines[I]
             n_link_hdr = form_link_header(m.group(1)).encode()
