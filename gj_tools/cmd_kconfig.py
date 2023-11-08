@@ -270,6 +270,97 @@ class mkt(object):
                     enable_syms.add(sym)
         return enable_syms
 
+class syzkaller(mkt):
+    enable = mkt.enable | {
+        "KCOV",
+        "KCOV_INSTRUMENT_ALL",
+        "KCOV_ENABLE_COMPARISONS",
+        "DEBUG_FS",
+        "DEBUG_KMEMLEAK",
+        "DEBUG_INFO",
+        "DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT",
+        "KALLSYMS",
+        "KALLSYMS_ALL",
+        "NAMESPACES",
+        "UTS_NS",
+        "IPC_NS",
+        "PID_NS",
+        "NET_NS",
+        "CGROUP_PIDS",
+        "MEMCG",
+        "USER_NS",
+        "CONFIGFS_FS",
+        "SECURITYFS",
+        "CMDLINE_BOOL",
+        "KASAN",
+        "KASAN_INLINE",
+        "FAULT_INJECTION",
+        "FAULT_INJECTION_DEBUG_FS",
+        "FAULT_INJECTION_USERCOPY",
+        "FAILSLAB",
+        "FAIL_PAGE_ALLOC",
+        "FAIL_MAKE_REQUEST",
+        "FAIL_IO_TIMEOUT",
+        "FAIL_FUTEX",
+        "LOCKDEP",
+        "PROVE_LOCKING",
+        "DEBUG_ATOMIC_SLEEP",
+        "PROVE_RCU",
+        "DEBUG_VM",
+        "FORTIFY_SOURCE",
+        "HARDENED_USERCOPY",
+        "LOCKUP_DETECTOR",
+        "SOFTLOCKUP_DETECTOR",
+        "HARDLOCKUP_DETECTOR",
+        "BOOTPARAM_HARDLOCKUP_PANIC",
+        "DETECT_HUNG_TASK",
+        "WQ_WATCHDOG",
+
+        # From kernel/configs/kvm_guest.config
+        "NET",
+        "NET_CORE",
+        "NETDEVICES",
+        "BLOCK",
+        "BLK_DEV",
+        "NETWORK_FILESYSTEMS",
+        "INET",
+        "TTY",
+        "SERIAL_8250",
+        "SERIAL_8250_CONSOLE",
+        "IP_PNP",
+        "IP_PNP_DHCP",
+        "BINFMT_ELF",
+        "PCI",
+        "PCI_MSI",
+        "DEBUG_KERNEL",
+        "VIRTUALIZATION",
+        "HYPERVISOR_GUEST",
+        "PARAVIRT",
+        "KVM_GUEST",
+        "VIRTIO",
+        "VIRTIO_MENU",
+        "VIRTIO_PCI",
+        "VIRTIO_BLK",
+        "VIRTIO_CONSOLE",
+        "VIRTIO_NET",
+        "9P_FS",
+        "NET_9P",
+        "NET_9P_VIRTIO",
+        "SCSI_LOWLEVEL",
+        "SCSI_VIRTIO",
+        "VIRTIO_INPUT",
+        "EXT4_FS",
+        "ATA_PIIX",
+        "E1000",
+        "BLK_DEV_SD",
+
+        "IOMMUFD",
+        "IOMMUFD_TEST",
+    }
+    force = mkt.force  | {
+        "CMDLINE": "net.ifnames=0",
+    }
+#CONFIG_RANDOMIZE_BASE
 
 class hmm(object):
     enable = {
@@ -300,7 +391,8 @@ def args_kconfig_gen(parser):
     parser.add_argument("mode",
                         action="store",
                         help="Type of configuration content to generate for",
-                        choices={"mkt", "rdma", "hmm", "vfio"})
+                        choices={"mkt", "rdma", "hmm", "vfio", "syzkaller"})
+
 
 def set_x86():
     os.environ["ARCH"] = "x86"
@@ -339,6 +431,8 @@ def cmd_kconfig_gen(args):
         mode = hmm()
     elif args.mode == "vfio":
         mode = vfio()
+    elif args.mode == "syzkaller":
+        mode = syzkaller()
 
     done_syms = set(kconf.const_syms.values())
     # These cannot be changed, just ingore them
