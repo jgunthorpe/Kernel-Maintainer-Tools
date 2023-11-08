@@ -10,6 +10,7 @@ import gj_tools.cmdline
 cmd_modules = {
     "cmd_ack_emails",
     "cmd_acr",
+    "cmd_check_send",
     "cmd_compile",
     "cmd_edit_comments",
     "cmd_expand_am",
