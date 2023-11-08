@@ -189,7 +189,8 @@ def args_ko_status(parser):
 def cmd_ko_status(args):
     branches = git_output(["branch", "--list", "--format", '%(refname)'],
                           mode="lines")
-    ko_branches = set(I for I in branches if I.startswith(b"refs/heads/k.o/"))
+    ko_branches = set(I for I in branches if I.startswith(b"refs/heads/k.o/")
+                      or I.startswith(b"refs/heads/k.o-iommufd/"))
 
     for I in sorted(ko_branches):
         I = I.decode()
@@ -197,6 +198,8 @@ def cmd_ko_status(args):
             continue
         rbranch = I.replace("refs/heads/k.o/",
                             "refs/remotes/%s/" % (config.remote_name))
+        rbranch = rbranch.replace("refs/heads/k.o-iommufd/",
+                                  "refs/remotes/%s/" % ("ko-iommufd"))
         if git_ref_id(rbranch, fail_is_none=True) is None:
             continue
         assert rbranch != I
