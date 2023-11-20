@@ -93,7 +93,7 @@ def clang_linux(args, arch, prefix, **kwargs):
     cmd = [
         "make", "-C",
         os.getcwd(), f"O={build_dir}", f"ARCH={arch}", "LD=ld.lld-15",
-        f"CC=clang-16 --target={prefix}",
+        f"CC=clang-17 --target={prefix}",
         get_j()
     ]
     do_linux_make(args, cmd, build_dir)

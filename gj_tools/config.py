@@ -14,7 +14,7 @@ ko_ssh_server = "git@gitolite.kernel.org"
 linus_master = "remotes/linus/master"
 
 # Compiler to use for any compile runs
-compiler = "ccache clang-16"
+compiler = "ccache clang-17"
 
 # Path to the shared clone of kernel.org
 ko_repo = "/home/shared/kernel.org.git"
