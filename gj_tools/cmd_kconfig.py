@@ -28,7 +28,9 @@ class rdma(object):
         "CIFS_SMB_DIRECT",
     }
     force = {}
-    block = {}
+    block = {
+        "ISM",
+    }
 
     def select(self, kconf, sym_in_file):
         # Enable all symbols in drivers/infiniband
