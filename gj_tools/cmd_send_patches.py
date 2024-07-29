@@ -121,6 +121,7 @@ class Series(object):
         skip_emails.add("jgg@mellanox.com")
         skip_emails.add("jgg@ziepe.ca")
         for commit in self.commits:
+            self.cc_emails[commit].add(("", "patches@lists.linux.dev"))
             if commit is self.cover_commit:
                 continue;
 
