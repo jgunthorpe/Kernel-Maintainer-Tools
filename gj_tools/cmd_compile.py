@@ -89,12 +89,12 @@ def compile_linux_x86(args, **kwargs):
     do_linux_make(args, cmd, build_dir)
 
 
-def clang_linux(args, arch, prefix, ld="ld.lld-17", **kwargs):
+def clang_linux(args, arch, prefix, ld="ld.lld-18", **kwargs):
     build_dir = get_builddir(args)
     cmd = [
         "make", "-C",
         os.getcwd(), f"O={build_dir}", f"ARCH={arch}", f"LD={ld}",
-        f"CC=clang-17 --target={prefix}",
+        f"CC=clang-18 --target={prefix}",
         get_j()
     ]
     do_linux_make(args, cmd, build_dir)
