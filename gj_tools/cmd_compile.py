@@ -18,7 +18,8 @@ arches = {
     "s390":
     dict(arch="s390",
          prefix="s390x-linux-gnu",
-         image="docker.io/tuxmake/s390_gcc:latest"),
+         image="docker.io/tuxmake/s390_gcc:latest",
+         ld="s390x-linux-gnu-ld"),
     "ppc64":
     dict(arch="powerpc",
          prefix="powerpc64le-linux-gnu",
@@ -88,11 +89,11 @@ def compile_linux_x86(args, **kwargs):
     do_linux_make(args, cmd, build_dir)
 
 
-def clang_linux(args, arch, prefix, **kwargs):
+def clang_linux(args, arch, prefix, ld="ld.lld-17", **kwargs):
     build_dir = get_builddir(args)
     cmd = [
         "make", "-C",
-        os.getcwd(), f"O={build_dir}", f"ARCH={arch}", "LD=ld.lld-15",
+        os.getcwd(), f"O={build_dir}", f"ARCH={arch}", f"LD={ld}",
         f"CC=clang-17 --target={prefix}",
         get_j()
     ]
