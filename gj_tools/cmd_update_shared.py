@@ -40,6 +40,29 @@ def update_repo(repo):
         print("Updated %s" % (repo.decode()))
 
 
+def integerize(s):
+    try:
+        return int(s)
+    except:
+        return s
+
+
+def sync_tags():
+    """Upload tags and Linus's head to other repos"""
+    tags = [
+        tag
+        for tag in git_output(["tag"], mode="lines")
+        if re.match(rb"^v[5-6]\.\d+(-rc\d+)?$", tag)
+    ]
+    tags.sort(key=lambda x: list(map(integerize, re.split(rb"v|\.|-", x))))
+    print(tags)
+    sync_tags = tags[-9:]
+    print(sync_tags)
+    remotes = ["ko-rdma", "ko-iommufd", "github"]
+    for remote in remotes:
+        git_call(["push", remote, "linus/master:linus"] + sync_tags)
+
+
 def args_update_shared(parser):
     pass
 
@@ -47,7 +70,11 @@ def args_update_shared(parser):
 def cmd_update_shared(args):
     """Fetch the latest upstream into the shared repo listed in alternates and
     then refresh the local 'origin' branch to the lastest upstream commit"""
+    sync_tags()
 
     for I in get_alternates():
         update_repo(I)
     git_call(["fetch", "--all"])
+
+    print("Syncing tags")
+    sync_tags()
